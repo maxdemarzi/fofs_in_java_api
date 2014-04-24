@@ -102,7 +102,7 @@ public class MyService {
     }
 
     private void findFofs(HashMap<Node, MutableInt> fofs, Node user) {
-        List<Node> friends = new ArrayList<>();
+        Set<Node> friends = new HashSet<>();
 
         if (user != null){
             getFirstLevelFriends(user, friends);
@@ -110,26 +110,28 @@ public class MyService {
         }
     }
 
-    private void getFirstLevelFriends(Node user, List<Node> friends) {
+    private void getFirstLevelFriends(Node user, Set<Node> friends) {
         for ( Relationship relationship : user.getRelationships(FRIENDS, Direction.BOTH) ){
             Node friend = relationship.getOtherNode(user);
             friends.add(friend);
         }
     }
 
-    private void getSecondLevelFriends(HashMap<Node, MutableInt> fofs, Node user, List<Node> friends) {
+    private void getSecondLevelFriends(HashMap<Node, MutableInt> fofs, Node user, Set<Node> friends) {
         for ( Node friend : friends ){
             for (Relationship otherRelationship : friend.getRelationships(FRIENDS, Direction.BOTH) ){
                 Node fof = otherRelationship.getOtherNode(friend);
-                if ((!user.equals(fof) && !friends.contains(fof))) {
-                    MutableInt mutableInt = fofs.get(fof);
-                    if (mutableInt == null) {
-                        fofs.put(fof, new MutableInt(1));
-                    } else {
-                        mutableInt.increment();
-                    }
+                MutableInt mutableInt = fofs.get(fof);
+                if (mutableInt == null) {
+                    fofs.put(fof, new MutableInt(1));
+                } else {
+                    mutableInt.increment();
                 }
             }
+        }
+        fofs.remove(user);
+        for ( Node friend : friends ){
+            fofs.remove(friend);
         }
     }
 
@@ -155,7 +157,7 @@ public class MyService {
 
     private List<Map.Entry<Node, MutableInt>> orderFofs(HashMap<Node, MutableInt> fofs) {
         List<Map.Entry<Node, MutableInt>> fofList = new ArrayList<>(fofs.entrySet());
-        Collections.sort(fofList, new ReverseMutableIntComparator());
+        Collections.sort(fofList, REVERSE_MUTABLE_INT_COMPARATOR);
         return fofList;
     }
 
